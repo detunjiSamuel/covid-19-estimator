@@ -1,7 +1,4 @@
-const getInfectionsByRequestedTime = ({infected , periodType ,  timeToElapse }) => {
-    return infected  * (2 ** convertTodays(periodType ,timeToElapse )
-};
-const convertTodays = (periodType, time) => {
+const convertToDays = (periodType, time) => {
   let result;
   switch (periodType) {
     case 'days':
@@ -19,13 +16,18 @@ const convertTodays = (periodType, time) => {
   }
   return result;
 };
+// eslint-disable-next-line max-len
+const getInfectionsByRequestedTime = ({ infected, periodType, timeToElapse }) =>
+  infected * 2 ** convertToDays(periodType, timeToElapse);
+
 const covid19ImpactEstimator = ({
   reportedCases,
   periodType,
-  timeToElapse
+  timeToElapse,
+  totalHospitalBeds
 }) => {
-  let impact = {};
-  let severeImpact = {};
+  const impact = {};
+  const severeImpact = {};
 
   // currently infected
   impact.currentlyInfected = reportedCases * 10;
@@ -37,10 +39,26 @@ const covid19ImpactEstimator = ({
     timeToElapse
   });
   severeImpact.infectionsByRequestedTime = getInfectionsByRequestedTime({
-      infected  :severeImpact.currentlyInfected,
-      periodType,
-      timeToElapse
-  })
+    infected: severeImpact.currentlyInfected,
+    periodType,
+    timeToElapse
+  });
+
+  // severe cases by requestedtime
+  impact.severeCasesByRequestedTime = Math.floor(
+    0.15 * impact.infectionsByRequestedTime
+  );
+  severeImpact.severeCasesByRequestedTime = Math.floor(
+    0.15 * severeImpact.infectionsByRequestedTime
+  );
+
+  // avaliable hospital beds
+  impact.hospitalBedsByRequestedTime =
+    totalHospitalBeds * 0.35 - impact.severeCasesByRequestedTime;
+  severeImpact.hospitalBedsByRequestedTime =
+    totalHospitalBeds * 0.35 - severeImpact.severeCasesByRequestedTime;
+
+
 };
 
 export default covid19ImpactEstimator;
