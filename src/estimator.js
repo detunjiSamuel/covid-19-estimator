@@ -123,7 +123,7 @@ const covid19ImpactEstimator = (data) => {
 
 const estimator = (req, res) => {
   let data;
-  if (!req.body) {
+  if (req.body) {
     data = covid19ImpactEstimator(req.body);
     if (req.params.type === 'xml') {
       res.set('Content-Type', 'text/xml');
