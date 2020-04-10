@@ -1,6 +1,4 @@
-const xml = require('xml2js');
 
-const xmlBuilder = new xml.Builder();
 const convertToDays = (periodType, time) => {
   let result;
   switch (periodType) {
@@ -121,23 +119,5 @@ const covid19ImpactEstimator = (data) => {
   };
 };
 
-const estimator = (req, res) => {
-  let data;
-  if (req.body) {
-    data = covid19ImpactEstimator(req.body);
-    if (req.params.format === 'xml') {
-      res.set('Content-Type', 'text/xml');
-      return res.status(200).send(xmlBuilder.buildObject(data));
-    }
 
-    return res.status(200).json(data);
-  }
-  if (req.params.format === 'xml') {
-    res.set('Content-Type', 'text/xml');
-    return res.status(500).send(xmlBuilder.buildObject('invalid'));
-  }
-
-  return res.status(500).json(' input');
-};
-
-module.exports = estimator;
+module.exports = covid19ImpactEstimator;
