@@ -1,11 +1,12 @@
+
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const writer = require('fs').createWriteStream('logs.txt', { flags: 'a' });
 const estimator = require('./estimator');
 
-const PORT = process.env.PORT;
-const writer = require('fs').createWriteStream('logs.txt', { flags: 'a' });
+const { PORT } = process.env;
 
 const app = express();
 

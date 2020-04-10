@@ -26,11 +26,10 @@ const getDollarsInFlight = (
   periodType
 ) => {
   const timeInDays = convertToDays(periodType, timeToElapse);
-  const moneyLost =
-    infectionsByRequestedTime *
-    avgDailyIncomePopulation *
-    avgDailyIncomeInUSD *
-    timeInDays;
+  const moneyLost = infectionsByRequestedTime
+    * avgDailyIncomePopulation
+    * avgDailyIncomeInUSD
+    * timeInDays;
   return moneyLost;
 };
 // eslint-disable-next-line max-len
@@ -141,4 +140,4 @@ const estimator = (req, res) => {
   return res.status(500).json(' input');
 };
 
-module.exports =  estimator;
+module.exports = estimator;
