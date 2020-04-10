@@ -17,14 +17,20 @@ const convertToDays = (periodType, time) => {
   return result;
 };
 // eslint-disable-next-line max-len
-const getInfectionsByRequestedTime = ({ infected, periodType, timeToElapse }) =>
-  infected * 2 ** convertToDays(periodType, timeToElapse);
+const getInfectionsByRequestedTime = ({ infected, periodType, timeToElapse }) => infected * 2 ** convertToDays(periodType, timeToElapse);
+
+const getDollarsInFlight = (
+  { avgDailyIncomeInUSD, avgDailyIncomePopulation },
+  cases,
+  timeToElapse
+) => cases * avgDailyIncomePopulation * avgDailyIncomeInUSD * timeToElapse;
 
 const covid19ImpactEstimator = ({
   reportedCases,
   periodType,
   timeToElapse,
-  totalHospitalBeds
+  totalHospitalBeds,
+  region
 }) => {
   const impact = {};
   const severeImpact = {};
@@ -58,12 +64,27 @@ const covid19ImpactEstimator = ({
   severeImpact.hospitalBedsByRequestedTime =
     totalHospitalBeds * 0.35 - severeImpact.severeCasesByRequestedTime;
 
+  // cases in icu
+  impact.casesForICUByRequestedTime = 0.15 * impact.infectionsByRequestedTime;
+  severeImpact.casesForICUByRequestedTime =
+    0.15 * severeImpact.infectionsByRequestedTime;
+  // cases in need of ventilator
+  impact.casesForVentilatorsByRequestedTime =
+    0.02 * impact.infectionsByRequestedTime;
+  severeImpact.casesForVentilatorsByRequestedTime =
+    0.02 * severeImpact.infectionsByRequestedTime;
 
+  // dollars in flight
+  impact.dollarsInFlight = getDollarsInFlight(
+    region,
+    impact.severeCasesByRequestedTime,
+    timeToElapse
+  );
 };
 
 export default covid19ImpactEstimator;
 
-/* challenge 1 
+/* challenge 1
     impact.currentlyInfected = input.reportedCases * 10
 
 
