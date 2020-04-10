@@ -1,3 +1,6 @@
+const xml = require('xml2js');
+
+const xmlBuilder = new xml.Builder();
 const convertToDays = (periodType, time) => {
   let result;
   switch (periodType) {
@@ -16,22 +19,39 @@ const convertToDays = (periodType, time) => {
   }
   return result;
 };
-// eslint-disable-next-line max-len
-const getInfectionsByRequestedTime = ({ infected, periodType, timeToElapse }) => infected * 2 ** convertToDays(periodType, timeToElapse);
-
 const getDollarsInFlight = (
   { avgDailyIncomeInUSD, avgDailyIncomePopulation },
-  cases,
-  timeToElapse
-) => cases * avgDailyIncomePopulation * avgDailyIncomeInUSD * timeToElapse;
-
-const covid19ImpactEstimator = ({
-  reportedCases,
-  periodType,
+  infectionsByRequestedTime,
   timeToElapse,
-  totalHospitalBeds,
-  region
+  periodType
+) => {
+  const timeInDays = convertToDays(periodType, timeToElapse);
+  const moneyLost =
+    infectionsByRequestedTime *
+    avgDailyIncomePopulation *
+    avgDailyIncomeInUSD *
+    timeInDays;
+  return moneyLost;
+};
+// eslint-disable-next-line max-len
+const getInfectionsByRequestedTime = ({
+  infected,
+  periodType,
+  timeToElapse
 }) => {
+  const timeInDays = convertToDays(periodType, timeToElapse);
+  return infected * 2 ** Math.floor(timeInDays / 3);
+};
+
+// main stuff
+const covid19ImpactEstimator = (data) => {
+  const {
+    reportedCases,
+    periodType,
+    timeToElapse,
+    totalHospitalBeds,
+    region
+  } = data;
   const impact = {};
   const severeImpact = {};
 
@@ -59,70 +79,66 @@ const covid19ImpactEstimator = ({
   );
 
   // avaliable hospital beds
-  impact.hospitalBedsByRequestedTime =
-    totalHospitalBeds * 0.35 - impact.severeCasesByRequestedTime;
-  severeImpact.hospitalBedsByRequestedTime =
-    totalHospitalBeds * 0.35 - severeImpact.severeCasesByRequestedTime;
+  impact.hospitalBedsByRequestedTime = Math.floor(
+    totalHospitalBeds * 0.35 - impact.severeCasesByRequestedTime
+  );
+  severeImpact.hospitalBedsByRequestedTime = Math.floor(
+    totalHospitalBeds * 0.35 - severeImpact.severeCasesByRequestedTime
+  );
 
   // cases in icu
-  impact.casesForICUByRequestedTime = 0.15 * impact.infectionsByRequestedTime;
-  severeImpact.casesForICUByRequestedTime =
-    0.15 * severeImpact.infectionsByRequestedTime;
+  impact.casesForICUByRequestedTime = Math.floor(
+    0.15 * impact.infectionsByRequestedTime
+  );
+  severeImpact.casesForICUByRequestedTime = Math.floor(
+    0.15 * severeImpact.infectionsByRequestedTime
+  );
+
   // cases in need of ventilator
-  impact.casesForVentilatorsByRequestedTime =
-    0.02 * impact.infectionsByRequestedTime;
-  severeImpact.casesForVentilatorsByRequestedTime =
-    0.02 * severeImpact.infectionsByRequestedTime;
+  impact.casesForVentilatorsByRequestedTime = Math.floor(
+    0.02 * impact.infectionsByRequestedTime
+  );
+  severeImpact.casesForVentilatorsByRequestedTime = Math.floor(
+    0.02 * severeImpact.infectionsByRequestedTime
+  );
 
   // dollars in flight
   impact.dollarsInFlight = getDollarsInFlight(
     region,
     impact.severeCasesByRequestedTime,
-    timeToElapse
+    timeToElapse,
+    periodType
   );
+  severeImpact.dollarsInFlight = getDollarsInFlight(
+    region,
+    severeImpact.severeCasesByRequestedTime,
+    timeToElapse,
+    periodType
+  );
+  return {
+    data,
+    impact,
+    severeImpact
+  };
 };
 
-export default covid19ImpactEstimator;
+const estimator = (req, res) => {
+  let data;
+  if (!req.body) {
+    data = covid19ImpactEstimator(req.body);
+    if (req.params.type === 'xml') {
+      res.set('Content-Type', 'text/xml');
+      return res.status(200).send(xmlBuilder.buildObject(data));
+    }
 
-/* challenge 1
-    impact.currentlyInfected = input.reportedCases * 10
+    return res.status(200).json(data);
+  }
+  if (req.params.type === 'xml') {
+    res.set('Content-Type', 'text/xml');
+    return res.status(500).send(xmlBuilder.buildObject('invalid'));
+  }
 
+  return res.status(500).json(' input');
+};
 
-    currentlyInfected doubles every 3 days ,meaning to get in 30days 
-    it would be 2 ^ something
-    infectionsByRequestedTime =  currentlyInfected * (2 ^ n)
-
-
-    severeImpact.currentlyInfected = input.reportedCases * 50
-
-*/
-
-/* challenge 2
-
-    severeCasesByRequestedTime = 0.15 * infectionsByRequestedTime
-    hospitalBedsByRequestedTime =  (input.totalHospitalBeds * 35%) - severeCasesByRequestedTime
-
-*/
-/* challenge 3
-    casesForICUByRequestedTime =  0.05 * infectionsByRequestedTime
-    casesForVentilatorsByRequestedTime =  0.02 * infectionsByRequestedTime
-    dollarsInFlight =  (infectionsByRequestedTime * input.region.avgDailyIncomePopulation ) * input.region.avgDailyIncomeInUSD  * number_of_days(self-computed)
-
-
-
-*/
-/** challenge 4
- * build a rest api
- *
- * /api/v1/on-covid-19 POST || can add /format
- * accepts the input object
- *
- * have BACKEND = "http://somthing.com" in.env
- *
- *
- * have a request -response time difference
- *  /api/v1/on-covid-19/logs Get
- * return type  text
- * return timestamp \t path \t done in "time diffetence" timeUnit(seconds)
- *
- */
+module.exports =  estimator;
