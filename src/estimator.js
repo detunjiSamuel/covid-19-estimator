@@ -76,10 +76,10 @@ const covid19ImpactEstimator = (data) => {
   );
 
   // avaliable hospital beds
-  impact.hospitalBedsByRequestedTime = Math.floor(
+  impact.hospitalBedsByRequestedTime = Math.ceil(
     totalHospitalBeds * 0.35 - impact.severeCasesByRequestedTime
   );
-  severeImpact.hospitalBedsByRequestedTime = Math.floor(
+  severeImpact.hospitalBedsByRequestedTime = Math.ceil(
     totalHospitalBeds * 0.35 - severeImpact.severeCasesByRequestedTime
   );
 
