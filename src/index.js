@@ -45,7 +45,7 @@ const estimator = (req, res) => {
     return res.status(200).json(data);
   }
   if (req.params.format === 'xml') {
-    res.set('Content-Type', 'text/xml');
+    res.set('Content-Type', 'application/xml');
     return res.status(500).send(xmlBuilder.buildObject('invalid'));
   }
 
