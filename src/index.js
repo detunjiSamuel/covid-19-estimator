@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const xml = require('xml2js');
 
+const { parseString } = xml;
+
 const xmlBuilder = new xml.Builder();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -36,7 +38,7 @@ app.use(
 const estimator = (req, res) => {
   let data;
   if (req.body) {
-    data = covid19ImpactEstimator(req.body);
+    data = covid19ImpactEstimator(parseString(req.body));
     if (req.params.format === 'xml') {
       res.set('Content-Type', 'text/xml');
       return res.status(200).send(xmlBuilder.buildObject(data));
@@ -54,7 +56,9 @@ const estimator = (req, res) => {
 
 const logs = (req, res) => {
   res.set('Content-Type', 'text/plain');
-  return res.status(200).send(fs.readFileSync('logs.txt', { encoding: 'utf-8' }));
+  return res
+    .status(200)
+    .send(fs.readFileSync('logs.txt', { encoding: 'utf-8' }));
 };
 
 app.post('/api/v1/on-covid-19/:format', estimator);
@@ -62,6 +66,5 @@ app.post('/api/v1/on-covid-19/*', estimator);
 app.post('/api/v1/on-covid-19', estimator);
 app.get('/api/v1/on-covid-19/*', logs);
 app.get('/api/v1/on-covid-19', logs);
-
 
 app.listen(PORT);
