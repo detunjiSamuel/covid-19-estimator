@@ -52,5 +52,8 @@ const estimator = (req, res) => {
 
 app.post('/api/v1/on-covid-19/:format', estimator);
 app.post('/api/v1/on-covid-19/*', estimator);
+app.post('/api/v1/on-covid-19', estimator);
+
+
 
 app.listen(PORT);
