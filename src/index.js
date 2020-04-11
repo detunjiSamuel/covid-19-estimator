@@ -5,7 +5,9 @@ const xml = require('xml2js');
 const xmlBuilder = new xml.Builder();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const writer = require('fs').createWriteStream('logs.txt', { flags: 'a' });
+const fs = require('fs');
+
+const writer = fs.createWriteStream('logs.txt', { flags: 'a' });
 const covid19ImpactEstimator = require('./estimator');
 
 const { PORT } = process.env;
@@ -50,9 +52,16 @@ const estimator = (req, res) => {
   return res.status(500).json(' input is not valid');
 };
 
+const logs = (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  return res.status(200).send(fs.readFileSync('logs.txt', { encoding: 'utf-8' }));
+};
+
 app.post('/api/v1/on-covid-19/:format', estimator);
 app.post('/api/v1/on-covid-19/*', estimator);
 app.post('/api/v1/on-covid-19', estimator);
+app.get('/api/v1/on-covid-19/*', logs);
+app.get('/api/v1/on-covid-19', logs);
 
 
 app.listen(PORT);
