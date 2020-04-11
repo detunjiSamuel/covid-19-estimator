@@ -55,5 +55,4 @@ app.post('/api/v1/on-covid-19/*', estimator);
 app.post('/api/v1/on-covid-19', estimator);
 
 
-
 app.listen(PORT);
