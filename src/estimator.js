@@ -24,11 +24,11 @@ const getDollarsInFlight = (
   periodType
 ) => {
   const timeInDays = convertToDays(periodType, timeToElapse);
-  const moneyLost = infectionsByRequestedTime
-    * avgDailyIncomePopulation
-    * avgDailyIncomeInUSD
-    * timeInDays;
-  return moneyLost;
+  const moneyLost = (infectionsByRequestedTime
+    * avgDailyIncomePopulation)
+    * (avgDailyIncomeInUSD
+    / timeInDays);
+  return Math.trunc(moneyLost);
 };
 // eslint-disable-next-line max-len
 const getInfectionsByRequestedTime = ({
@@ -85,17 +85,17 @@ const covid19ImpactEstimator = (data) => {
 
   // cases in icu
   impact.casesForICUByRequestedTime = Math.trunc(
-    0.15 * impact.infectionsByRequestedTime
+    0.05 * impact.infectionsByRequestedTime
   );
   severeImpact.casesForICUByRequestedTime = Math.trunc(
-    0.15 * severeImpact.infectionsByRequestedTime
+    0.05 * severeImpact.infectionsByRequestedTime
   );
 
   // cases in need of ventilator
-  impact.casesForVentilatorsByRequestedTime = Math.trunc(
+  impact.casesForVentilatorsByRequestedTime = Math.floor(
     0.02 * impact.infectionsByRequestedTime
   );
-  severeImpact.casesForVentilatorsByRequestedTime = Math.trunc(
+  severeImpact.casesForVentilatorsByRequestedTime = Math.floor(
     0.02 * severeImpact.infectionsByRequestedTime
   );
 
