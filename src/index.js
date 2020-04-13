@@ -28,7 +28,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(
-  morgan(':method   :url    :status   :response-time ms', {
+  morgan(':method   :url    :status   0:total-time[0]ms', {
     stream: writer
   })
 );
