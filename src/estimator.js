@@ -1,6 +1,4 @@
-const xml = require('xml2js');
 
-const xmlBuilder = new xml.Builder();
 const convertToDays = (periodType, time) => {
   let result;
   switch (periodType) {
@@ -26,12 +24,11 @@ const getDollarsInFlight = (
   periodType
 ) => {
   const timeInDays = convertToDays(periodType, timeToElapse);
-  const moneyLost =
-    infectionsByRequestedTime *
-    avgDailyIncomePopulation *
-    avgDailyIncomeInUSD *
-    timeInDays;
-  return moneyLost;
+  const moneyLost = (infectionsByRequestedTime
+    * avgDailyIncomePopulation)
+    * (avgDailyIncomeInUSD
+    / timeInDays);
+  return Math.trunc(moneyLost);
 };
 // eslint-disable-next-line max-len
 const getInfectionsByRequestedTime = ({
@@ -79,19 +76,19 @@ const covid19ImpactEstimator = (data) => {
   );
 
   // avaliable hospital beds
-  impact.hospitalBedsByRequestedTime = Math.floor(
-    totalHospitalBeds * 0.35 - impact.severeCasesByRequestedTime
-  );
-  severeImpact.hospitalBedsByRequestedTime = Math.floor(
-    totalHospitalBeds * 0.35 - severeImpact.severeCasesByRequestedTime
-  );
+  impact.hospitalBedsByRequestedTime = Math.ceil(
+    totalHospitalBeds * 0.35
+  ) - impact.severeCasesByRequestedTime;
+  severeImpact.hospitalBedsByRequestedTime = Math.ceil(
+    totalHospitalBeds * 0.35
+  ) - severeImpact.severeCasesByRequestedTime;
 
   // cases in icu
-  impact.casesForICUByRequestedTime = Math.floor(
-    0.15 * impact.infectionsByRequestedTime
+  impact.casesForICUByRequestedTime = Math.trunc(
+    0.05 * impact.infectionsByRequestedTime
   );
-  severeImpact.casesForICUByRequestedTime = Math.floor(
-    0.15 * severeImpact.infectionsByRequestedTime
+  severeImpact.casesForICUByRequestedTime = Math.trunc(
+    0.05 * severeImpact.infectionsByRequestedTime
   );
 
   // cases in need of ventilator
@@ -105,13 +102,13 @@ const covid19ImpactEstimator = (data) => {
   // dollars in flight
   impact.dollarsInFlight = getDollarsInFlight(
     region,
-    impact.severeCasesByRequestedTime,
+    impact.infectionsByRequestedTime,
     timeToElapse,
     periodType
   );
   severeImpact.dollarsInFlight = getDollarsInFlight(
     region,
-    severeImpact.severeCasesByRequestedTime,
+    severeImpact.infectionsByRequestedTime,
     timeToElapse,
     periodType
   );
@@ -122,23 +119,5 @@ const covid19ImpactEstimator = (data) => {
   };
 };
 
-const estimator = (req, res) => {
-  let data;
-  if (!req.body) {
-    data = covid19ImpactEstimator(req.body);
-    if (req.params.type === 'xml') {
-      res.set('Content-Type', 'text/xml');
-      return res.status(200).send(xmlBuilder.buildObject(data));
-    }
 
-    return res.status(200).json(data);
-  }
-  if (req.params.type === 'xml') {
-    res.set('Content-Type', 'text/xml');
-    return res.status(500).send(xmlBuilder.buildObject('invalid'));
-  }
-
-  return res.status(500).json(' input');
-};
-
-module.exports =  estimator;
+module.exports = covid19ImpactEstimator;
